@@ -64,4 +64,7 @@ dependencies {
 
     // Navegação com Compose
     implementation("androidx.navigation:navigation-compose:2.7.7")
+
+    // Adicione esta linha para a biblioteca Material (M2)
+    implementation("androidx.compose.material:material:1.6.8")
 }

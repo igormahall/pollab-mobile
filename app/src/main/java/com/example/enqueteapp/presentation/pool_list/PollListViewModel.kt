@@ -21,6 +21,9 @@ class PollListViewModel(private val repository: PollRepository = PollRepository(
     private val _uiState = MutableStateFlow<PollListUiState>(PollListUiState.Loading)
     val uiState: StateFlow<PollListUiState> = _uiState
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing
+
     fun fetchEnquetes() {
         _uiState.value = PollListUiState.Loading
         viewModelScope.launch {
@@ -32,7 +35,15 @@ class PollListViewModel(private val repository: PollRepository = PollRepository(
                 _uiState.value = PollListUiState.Success(enquetes)
             } catch (e: Exception) {
                 _uiState.value = PollListUiState.Error(e.message ?: "Erro desconhecido")
+            } finally {
+                // Garante que o indicador de refresh pare de girar
+                _isRefreshing.value = false
             }
         }
+    }
+
+    fun refresh() {
+        _isRefreshing.value = true
+        fetchEnquetes()
     }
 }
