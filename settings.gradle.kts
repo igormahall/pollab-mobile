@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "EnqueteApp"
+rootProject.name = "pollab-mobile"
 include(":app")
