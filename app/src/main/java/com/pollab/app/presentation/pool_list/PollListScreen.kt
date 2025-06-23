@@ -1,6 +1,6 @@
 package com.example.app.presentation.poll_list
 
-import androidx.compose.foundation.background
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,7 +10,7 @@ import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,12 +19,52 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.app.data.Enquete
+import com.example.app.ui.theme.extendedColors
+import com.pollab.app.R
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PollabTopBar() {
+    TopAppBar(
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.pollab_home),
+                    contentDescription = "Logo Pollab",
+                    tint = Color.Unspecified,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .padding(end = 12.dp)
+                )
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = "Pollab",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Seu voto vale mais do que imagina!",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
@@ -32,7 +72,7 @@ fun PollListScreen(
     navController: NavController,
     viewModel: PollListViewModel = viewModel()
 ) {
-    LaunchedEffect(key1 = Unit) {
+    LaunchedEffect(Unit) {
         viewModel.fetchEnquetes()
     }
 
@@ -44,15 +84,17 @@ fun PollListScreen(
     )
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Enquetes Disponíveis") },
-                actions = {
-                    IconButton(onClick = { navController.navigate("enquetes/nova") }) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = "Criar Nova Enquete")
-                    }
-                }
-            )
+        topBar = { PollabTopBar() },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { navController.navigate("enquetes/nova") },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier.padding(end = 16.dp, bottom = 16.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Criar Nova Enquete")
+            }
         }
     ) { paddingValues ->
         Box(
@@ -67,6 +109,7 @@ fun PollListScreen(
                         CircularProgressIndicator()
                     }
                 }
+
                 is PollListUiState.Success -> {
                     if (state.enquetes.isEmpty()) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -89,6 +132,7 @@ fun PollListScreen(
                         }
                     }
                 }
+
                 is PollListUiState.Error -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
@@ -111,35 +155,67 @@ fun PollListScreen(
 @Composable
 fun PollListItem(
     enquete: Enquete,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
+    val isAberta = enquete.status == "Aberta"
+    val backgroundColor = if (isAberta) {
+        MaterialTheme.extendedColors.cardAberta
+    } else {
+        MaterialTheme.extendedColors.cardFechada
+    }
+
+    val chipTextColor = if (isAberta) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    val chipBgColor = MaterialTheme.colorScheme.surface
+    val iconTint = chipTextColor
+
     ElevatedCard(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.medium
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = backgroundColor
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = enquete.titulo,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
             )
+
             Spacer(modifier = Modifier.height(8.dp))
+
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = enquete.status,
-                    modifier = Modifier
-                        .background(
-                            color = if (enquete.status == "Aberta") Color(0xFF10B981) else Color(0xFFEF4444),
-                            shape = MaterialTheme.shapes.small
+                AssistChip(
+                    onClick = {},
+                    label = {
+                        Text(
+                            text = enquete.status,
+                            color = chipTextColor,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium
                         )
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = if (isAberta) Icons.Filled.PlayArrow else Icons.Filled.Lock,
+                            contentDescription = null,
+                            tint = iconTint
+                        )
+                    },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = chipBgColor,
+                        labelColor = chipTextColor,
+                        leadingIconContentColor = iconTint
+                    )
                 )
+
                 Spacer(modifier = Modifier.width(8.dp))
+
                 Text(
                     text = "• ${enquete.opcoes.sumOf { it.votos }} votos",
                     style = MaterialTheme.typography.bodySmall,

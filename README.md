@@ -7,7 +7,7 @@ O aplicativo consome a **API RESTful** construída em Django para **listar**, **
 ## Interface
 
 <p align="center">
-  <img src="readme_assets/mobile_splashscreen.png" alt="Splashscreen" width="30%"/>
+  <img src="readme_assets/mobile_create.png" alt="Splashscreen" width="30%"/>
   <img src="readme_assets/mobile_polllist.png" alt="Enquetes Abertas" width="30%"/>
   <img src="readme_assets/mobile_polldetails.png" alt="Detalhe da Enquete" width="30%"/>
 </p>

@@ -23,18 +23,16 @@ fun EnqueteFormComponent(
     viewModel: PollFormViewModel = viewModel()
 ) {
     var title by remember { mutableStateOf("") }
-    val options = remember { mutableStateListOf("", "") } // Começa com 2 opções
+    val options = remember { mutableStateListOf("", "") }
     val snackbarHostState = remember { SnackbarHostState() }
     var isSubmitting by remember { mutableStateOf(false) }
 
-    // Ouve eventos do ViewModel para navegação ou erros
-    LaunchedEffect(key1 = Unit) {
+    LaunchedEffect(Unit) {
         viewModel.formEvent.collectLatest { event ->
             isSubmitting = false
             when (event) {
                 is FormEvent.Success -> {
                     navController.navigate("poll_detail/${event.newPollId}") {
-                        // Limpa a pilha de navegação até a tela de lista
                         popUpTo("poll_list")
                     }
                 }
@@ -58,20 +56,23 @@ fun EnqueteFormComponent(
             )
         },
         floatingActionButton = {
-            // Botão flutuante para salvar
-            FloatingActionButton(onClick = {
-                isSubmitting = true
-                viewModel.createEnquete(title, options)
-            }) {
-                Icon(Icons.Default.Add, contentDescription = "Salvar Enquete")
-            }
+            ExtendedFloatingActionButton(
+                onClick = {
+                    isSubmitting = true
+                    viewModel.createEnquete(title, options)
+                },
+                icon = { Icon(Icons.Default.Add, contentDescription = "Salvar enquete") },
+                text = { Text("Salvar") },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
         }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
@@ -80,8 +81,15 @@ fun EnqueteFormComponent(
                     onValueChange = { title = it },
                     label = { Text("Título da enquete") },
                     modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
                     colors = TextFieldDefaults.outlinedTextFieldColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             }
@@ -95,12 +103,19 @@ fun EnqueteFormComponent(
                     trailingIcon = {
                         if (options.size > 2) {
                             IconButton(onClick = { options.removeAt(index) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Remover Opção")
+                                Icon(Icons.Default.Delete, contentDescription = "Remover opção")
                             }
                         }
                     },
+                    singleLine = true,
                     colors = TextFieldDefaults.outlinedTextFieldColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             }
@@ -108,7 +123,11 @@ fun EnqueteFormComponent(
             item {
                 Button(
                     onClick = { options.add("") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 ) {
                     Text("Adicionar mais opções")
                 }

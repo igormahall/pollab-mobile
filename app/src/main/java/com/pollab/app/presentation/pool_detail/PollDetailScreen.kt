@@ -1,6 +1,8 @@
 package com.example.app.presentation.poll_detail
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -8,16 +10,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.app.data.Enquete
 import com.example.app.data.Opcao
+import com.example.app.ui.theme.extendedColors
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,38 +37,36 @@ fun PollDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Ouve os eventos do ViewModel para mostrar notificações de erro de voto
-    LaunchedEffect(key1 = Unit) {
+    LaunchedEffect(Unit) {
         viewModel.voteEvent.collectLatest { event ->
-            when (event) {
-                is VoteEvent.ShowToast -> {
-                    snackbarHostState.showSnackbar(message = event.message, duration = SnackbarDuration.Short)
-                }
+            if (event is VoteEvent.ShowToast) {
+                snackbarHostState.showSnackbar(event.message, duration = SnackbarDuration.Short)
             }
         }
     }
 
-    LaunchedEffect(key1 = pollId) {
-        if (pollId != null) {
-            viewModel.fetchEnquete(pollId)
-        }
+    LaunchedEffect(pollId) {
+        pollId?.let { viewModel.fetchEnquete(it) }
     }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Detalhes da Enquete") },
+                title = { Text("Lista de enquetes") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 }
             )
         }
     ) { paddingValues ->
         Box(
-            modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
             when (val state = uiState) {
@@ -78,6 +83,7 @@ fun PollDetailScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PollDetailContent(
     enquete: Enquete,
@@ -100,28 +106,53 @@ fun PollDetailContent(
                 .padding(vertical = 16.dp)
         )
 
-        OutlinedTextField(
-            value = participantName,
-            onValueChange = { participantName = it },
-            label = { Text("Seu Nome (para votar)") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp),
-            singleLine = true,
-            enabled = enquete.status == "Aberta",
-            keyboardOptions = KeyboardOptions(autoCorrect = false)
-        )
-
-        if (enquete.status == "Fechada") {
-            Text(
-                text = "Esta enquete está fechada para novos votos.",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium,
+        if (enquete.status == "Aberta") {
+            OutlinedTextField(
+                value = participantName,
+                onValueChange = { participantName = it },
+                label = { Text("Seu Nome (para votar)") },
                 modifier = Modifier
-                    .padding(bottom = 12.dp)
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(autoCorrect = false),
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    cursorColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        } else {
+            AssistChip(
+                onClick = {},
+                label = {
+                    Text(
+                        "Enquete encerrada",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Lock,
+                        contentDescription = null
+                    )
+                },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f),
+                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    leadingIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                modifier = Modifier
                     .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 12.dp)
             )
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -147,18 +178,28 @@ fun PollOptionItem(
     isVotingEnabled: Boolean,
     onVoteClick: () -> Unit
 ) {
+    val backgroundColor = if (isWinner) {
+        MaterialTheme.extendedColors.cardAberta.copy(alpha = 0.3f)
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    val borderColor = if (isWinner) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f) else Color.Transparent
+
     Card(
-        shape = RoundedCornerShape(16.dp),
-        border = if (isWinner) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, borderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .padding(horizontal = 4.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .animateContentSize()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -166,7 +207,8 @@ fun PollOptionItem(
                 Text(
                     text = opcao.texto_opcao,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = if (isWinner) FontWeight.SemiBold else FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "Votos: ${opcao.votos}",
@@ -175,13 +217,18 @@ fun PollOptionItem(
                 )
             }
 
-            Button(
-                onClick = onVoteClick,
-                enabled = isVotingEnabled,
-                shape = RoundedCornerShape(24.dp),
-                modifier = Modifier.defaultMinSize(minWidth = 90.dp)
-            ) {
-                Text("Votar")
+            if (isVotingEnabled) {
+                Button(
+                    onClick = onVoteClick,
+                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier.defaultMinSize(minWidth = 90.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Text("Votar")
+                }
             }
         }
     }
