@@ -10,6 +10,8 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 import com.example.app.data.CreateEnquetePayload
 import com.pollab.app.BuildConfig
+import com.pollab.app.network.RetryInterceptor
+import okhttp3.OkHttpClient
 
 // 1. Define os endpoints da nossa API
 interface ApiService {
@@ -31,14 +33,16 @@ interface ApiService {
 
 // 2. Cria um objeto singleton para instanciar o Retrofit
 object RetrofitInstance {
-    //private const val BASE_URL = "http://10.0.2.2:8000/"
+    private const val BASE_URL = BuildConfig.API_BASE_URL
 
-    private val baseUrl: String
-        get() = BuildConfig.API_BASE_URL
+    private val okHttpClient = OkHttpClient.Builder()
+        .addInterceptor(RetryInterceptor())
+        .build()
 
     val api: ApiService by lazy {
         Retrofit.Builder()
-            .baseUrl(baseUrl)
+            .baseUrl(BASE_URL)
+            .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiService::class.java)
