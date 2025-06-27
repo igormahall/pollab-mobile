@@ -1,4 +1,4 @@
-# 🧪 Pollab - Mobile App
+# 🧪 Pollab - Mobile App · [Play Store](https://pollab-web.netlify.app/)
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-1.9-orange)
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-UI-blue)
@@ -7,23 +7,27 @@
 
 **About Pollab**
 
-**Pollab** (short for *Poll Laboratory*) is a modern, open-source polling platform designed to
-simplify how users collect opinions and make decisions. Built with **Django REST Framework**
-and **PostgreSQL**, it powers both web and mobile clients with a robust API.
+**Pollab** (*Poll Laboratory*) is an open-source, real-time polling platform built with a modern 
+tech stack to simplify how people gather opinions and make decisions. 
 
-Main features include:
-- 🧠 Clean and responsive UI
-- ⚙️ Reactive forms with validation
-- 🕒 Real-time vote tracking and countdown support
-- 📢 Toast notifications for a smooth UX
+The **Pollab mobile app** is a native Android client developed with **Kotlin** and **Jetpack Compose**,
+powered by a RESTful backend written in Django.
 
-Whether you're testing ideas, collecting feedback, or running interactive demos — Pollab lets
-you create, vote, and visualize results in seconds.
+Core features:
+- ✨ Minimalist and responsive UI
+- ✅ Form validation and feedback
+- 📊 Live vote updates with visual indicators
+- 🔔 Toast/snackbar alerts for UX clarity
+- 🔐 One-vote-per-user enforcement
+- ⏱ Poll expiration countdown logic
+
+Whether you're prototyping ideas, running a classroom poll, or testing engagement — Pollab is built to 
+**create**, **vote**, and **visualize results in seconds**.
 > **Join. Experiment. Transform.**
 
 ---
 
-## Interface
+## Screenshots
 
 <p align="center">
   <img src="readme_assets/mobile_create.png" alt="Splashscreen" width="30%"/>
@@ -33,17 +37,17 @@ you create, vote, and visualize results in seconds.
 
 ---
 
-## 🛠️ Architecture & Technologies
+## 🛠️ Architecture
 
-| Layer       | Technology                                    |
-|-------------|-----------------------------------------------|
-| **IDE**     | Android Studio (recommended) or IntelliJ IDEA |
-| **UI**      | Jetpack Compose                               |
-| **Pattern** | MVVM (Model-View-ViewModel)                   |
-| **Network** | Retrofit                                      |
-| **Async**   | Kotlin Coroutines                             |
-| **State**   | StateFlow · SharedFlow                        |
-| **Routing** | Navigation Compose                            |
+| Layer           | Technology                     |
+|-----------------|--------------------------------|
+| **IDE**         | Android Studio / IntelliJ IDEA |
+| **UI**          | Jetpack Compose                |
+| **Pattern**     | MVVM (Model-View-ViewModel)    |
+| **Network**     | Retrofit · GSON                |
+| **Concurrency** | Kotlin Coroutines              |
+| **State**       | StateFlow · SharedFlow         |
+| **Navigation**  | Navigation Compose             |
 
 ### Why These Choices?
 
@@ -65,7 +69,7 @@ Make sure you have the following installed:
 - [Java Development Kit (JDK) > 17](https://adoptium.net/en-GB/)
 - [Git](https://git-scm.com/)
 - Backend API running locall (see: [pollab-backend](https://github.com/igormahall/pollab-backend))
-  > Must be accessible from emulator via `http://10.0.2.2:8000`
+  - Must be accessible via `http://10.0.2.2:8000` for emulators
 
 
 ### 1. Clone the Repository
@@ -83,9 +87,10 @@ cd pollab-mobile
 ### 3. Run the Django Backend
 - Ensure the REST API is up and running locally:
   ```bash
+  cd pollab-backend
   python manage.py runserver
   ```
-> ⚠️ The app expects the backend to be accessible at http://10.0.2.2:8000/ for emulator compatibility.
+> ⚠️ For emulator access, ensure the backend URL is set to http://10.0.2.2:8000/
 
 
 ### 4. Launch the App
@@ -94,7 +99,7 @@ cd pollab-mobile
 
 ---
 
-## 🧱 Implementation Breakdown
+## 📐 Project Structure
 
 ### 🧩 1. Network & Data Layer
 
@@ -107,7 +112,7 @@ cd pollab-mobile
 
 
 - **Localhost Access**  
-  - Use `http://10.0.2.2:8000/` in the emulator )maps to host´s localhost)
+  - `http://10.0.2.2:8000/` points to local backend
 
 
 - **Permissions**  
@@ -134,7 +139,7 @@ cd pollab-mobile
   - `SharedFlow` : Emits one-time events (snackbars, errors).
 
 - **Concurrency & Safety**  
-  Uses `withContext(Dispatchers.IO)` inside `viewModelScope` to avoid blocking the UI thread
+  - Uses `withContext(Dispatchers.IO)` inside `viewModelScope` to avoid blocking the UI thread
 
 ---
 
@@ -162,16 +167,11 @@ cd pollab-mobile
 
 ### 4. UX Enhancements
 
-- **Visual Feedback**
-  - Loading snippers
-  - Snackbar messages for success or failure
-  - Disables buttons async operations
-
-- **Winner Highlighting**
-  - The option with most votes is visually emphasized
-
-- **User simulation**
-  - A participant name field simulates multiple users and enforces **1 vote per user rule**
+- Live countdown until poll expiration
+- Highlights winning option dynamically
+- Participant name required before voting
+- Voting disabled for expired or already-voted polls
+- Feedback via SnackbarHost and Toast messages
 
 ---
 
