@@ -1,6 +1,7 @@
 package com.example.app.presentation.poll_list
 
-import androidx.compose.animation.fadeIn
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,6 +30,11 @@ import com.example.app.data.Enquete
 import com.example.app.ui.theme.extendedColors
 import com.pollab.app.R
 
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+import java.time.Duration
+import java.time.ZoneOffset
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PollabTopBar() {
@@ -56,7 +62,7 @@ fun PollabTopBar() {
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Seu voto vale mais do que imagina!",
+                        text = "Participe. Experimente. Transforme.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -66,6 +72,7 @@ fun PollabTopBar() {
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun PollListScreen(
@@ -124,6 +131,7 @@ fun PollListScreen(
                             items(state.enquetes) { enquete ->
                                 PollListItem(
                                     enquete = enquete,
+                                    viewModel = viewModel,
                                     onClick = {
                                         navController.navigate("poll_detail/${enquete.id}")
                                     }
@@ -152,13 +160,17 @@ fun PollListScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PollListItem(
     enquete: Enquete,
     onClick: () -> Unit,
+    viewModel: PollListViewModel,
     modifier: Modifier = Modifier
 ) {
-    val isAberta = enquete.status == "Aberta"
+    val isExpired = viewModel.isEnqueteExpirada(enquete.expires_at)
+    val isAberta = !isExpired
+
     val backgroundColor = if (isAberta) {
         MaterialTheme.extendedColors.cardAberta
     } else {
@@ -191,10 +203,11 @@ fun PollListItem(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AssistChip(
+
                     onClick = {},
                     label = {
                         Text(
-                            text = enquete.status,
+                            text = if (isAberta) "Aberta" else "Encerrada",
                             color = chipTextColor,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium
@@ -222,6 +235,37 @@ fun PollListItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
+            val tempoRestante = calcularTempoRestante(enquete.expires_at)
+
+            tempoRestante?.let {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Expira em: $it",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
         }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun calcularTempoRestante(expiration: String?): String? {
+    return try {
+        if (expiration.isNullOrBlank()) return null
+        val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+        val expiresAt = OffsetDateTime.parse(expiration, formatter)
+        val now = OffsetDateTime.now(ZoneOffset.UTC)
+
+        val duration = Duration.between(now, expiresAt)
+        if (duration.isNegative) return null
+
+        val horas = duration.toHours()
+        val minutos = duration.toMinutes() % 60
+        "%02dh %02dm".format(horas, minutos)
+    } catch (e: Exception) {
+        null
     }
 }

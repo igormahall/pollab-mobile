@@ -1,4 +1,3 @@
-// src/main/java/com/example/enqueteapp/data/PollModels.kt
 package com.example.app.data
 
 data class Opcao(
@@ -11,11 +10,14 @@ data class Enquete(
     val id: Int,
     val titulo: String,
     val data_criacao: String,
+    val expires_at: String?,
+    val delete_at: String?,
     val status: String,
     val opcoes: List<Opcao>
 )
 
 data class CreateEnquetePayload(
     val titulo: String,
+    val duracao_horas: Int,
     val opcoes_input: List<String>
 )

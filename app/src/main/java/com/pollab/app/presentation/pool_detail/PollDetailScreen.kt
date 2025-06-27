@@ -1,8 +1,9 @@
 package com.example.app.presentation.poll_detail
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,7 +12,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,7 +26,27 @@ import com.example.app.data.Enquete
 import com.example.app.data.Opcao
 import com.example.app.ui.theme.extendedColors
 import kotlinx.coroutines.flow.collectLatest
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
+@RequiresApi(Build.VERSION_CODES.O)
+fun calcularTempoRestante(expiresAt: String?): String? {
+    return try {
+        val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+        val expiration = OffsetDateTime.parse(expiresAt ?: return null, formatter)
+        val now = OffsetDateTime.now(ZoneOffset.UTC)
+        val duration = java.time.Duration.between(now, expiration)
+        if (duration.isNegative) return null
+        val horas = duration.toHours()
+        val minutos = duration.toMinutes() % 60
+        "%02dh %02dm".format(horas, minutos)
+    } catch (e: Exception) {
+        null
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PollDetailScreen(
@@ -71,22 +91,26 @@ fun PollDetailScreen(
         ) {
             when (val state = uiState) {
                 is PollDetailUiState.Loading -> CircularProgressIndicator()
-                is PollDetailUiState.Success -> PollDetailContent(
-                    enquete = state.enquete,
-                    onVoteClick = { optionId, participantId ->
-                        viewModel.vote(optionId, participantId)
-                    }
-                )
+                is PollDetailUiState.Success -> {
+                    val isExpired = viewModel.isEnqueteExpirada(state.enquete.expires_at)
+                    PollDetailContent(
+                        enquete = state.enquete,
+                        isExpired = isExpired,
+                        onVoteClick = { optionId, participantId -> viewModel.vote(optionId, participantId) }
+                    )
+                }
                 is PollDetailUiState.Error -> Text("Falha ao carregar: ${state.message}")
             }
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PollDetailContent(
     enquete: Enquete,
+    isExpired: Boolean,
     onVoteClick: (optionId: Int, participantId: String) -> Unit
 ) {
     var participantName by remember { mutableStateOf("") }
@@ -106,7 +130,19 @@ fun PollDetailContent(
                 .padding(vertical = 16.dp)
         )
 
-        if (enquete.status == "Aberta") {
+        val tempoRestante = calcularTempoRestante(enquete.expires_at)
+        tempoRestante?.let {
+            Text(
+                text = "Expira em: $it",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 8.dp)
+            )
+        }
+
+        if (!isExpired) {
             OutlinedTextField(
                 value = participantName,
                 onValueChange = { participantName = it },
@@ -163,7 +199,7 @@ fun PollDetailContent(
                 PollOptionItem(
                     opcao = opcao,
                     isWinner = isWinner,
-                    isVotingEnabled = enquete.status == "Aberta" && participantName.isNotBlank(),
+                    isVotingEnabled = !isExpired && participantName.isNotBlank(),
                     onVoteClick = { onVoteClick(opcao.id, participantName.trim()) }
                 )
             }

@@ -1,4 +1,3 @@
-// src/main/java/com/example/enqueteapp/data/PollRepository.kt
 package com.example.app.data
 
 import com.example.app.network.ApiService
@@ -21,8 +20,12 @@ class PollRepository(private val apiService: ApiService = RetrofitInstance.api) 
         return apiService.vote(pollId, payload)
     }
 
-    suspend fun createEnquete(title: String, options: List<String>): Enquete {
-        val payload = CreateEnquetePayload(titulo = title, opcoes_input = options)
+    suspend fun createEnquete(title: String, options: List<String>, duracaoHoras: Int): Enquete {
+        val payload = CreateEnquetePayload(
+            titulo = title,
+            opcoes_input = options,
+            duracao_horas = duracaoHoras
+        )
         return apiService.createEnquete(payload)
     }
 }

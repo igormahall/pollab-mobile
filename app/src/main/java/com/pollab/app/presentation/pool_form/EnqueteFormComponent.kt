@@ -3,6 +3,7 @@ package com.example.app.presentation.poll_form
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -15,6 +16,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.ui.text.input.KeyboardType
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,6 +29,9 @@ fun EnqueteFormComponent(
     val options = remember { mutableStateListOf("", "") }
     val snackbarHostState = remember { SnackbarHostState() }
     var isSubmitting by remember { mutableStateOf(false) }
+    var duracaoHoras by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+
 
     LaunchedEffect(Unit) {
         viewModel.formEvent.collectLatest { event ->
@@ -58,8 +64,17 @@ fun EnqueteFormComponent(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = {
+                    val duracao = duracaoHoras.toIntOrNull()
+                    if (duracao == null || duracao <= 0) {
+                        isSubmitting = false
+                        // exibe erro de duração inválida
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Informe uma duração válida (em horas)")
+                        }
+                        return@ExtendedFloatingActionButton
+                    }
                     isSubmitting = true
-                    viewModel.createEnquete(title, options)
+                    viewModel.createEnquete(title, options, duracao)
                 },
                 icon = { Icon(Icons.Default.Add, contentDescription = "Salvar enquete") },
                 text = { Text("Salvar") },
@@ -82,6 +97,26 @@ fun EnqueteFormComponent(
                     label = { Text("Título da enquete") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+                OutlinedTextField(
+                    value = duracaoHoras,
+                    onValueChange = { input ->
+                        if (input.all { it.isDigit() }) duracaoHoras = input
+                    },
+                    label = { Text("Duração (horas)") },
+                    placeholder = { Text("Ex: 24") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                         focusedTextColor = MaterialTheme.colorScheme.onSurface,

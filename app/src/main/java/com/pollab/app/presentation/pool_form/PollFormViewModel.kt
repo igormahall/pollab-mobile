@@ -19,21 +19,33 @@ class PollFormViewModel(private val repository: PollRepository = PollRepository(
     private val _formEvent = MutableSharedFlow<FormEvent>()
     val formEvent = _formEvent.asSharedFlow()
 
-    fun createEnquete(title: String, options: List<String>) {
+    fun createEnquete(title: String, options: List<String>, duracaoHoras: Int) {
         viewModelScope.launch {
             try {
                 val validOptions = options.filter { it.isNotBlank() }
+
                 if (title.isBlank() || validOptions.size < 2) {
-                    // ...
+                    _formEvent.emit(FormEvent.Error("Título e pelo menos duas opções são obrigatórios."))
                     return@launch
                 }
-                // A chamada agora é mais simples
-                val newPoll = withContext(Dispatchers.IO) {
-                    repository.createEnquete(title, validOptions)
+
+                if (duracaoHoras <= 0) {
+                    _formEvent.emit(FormEvent.Error("Informe uma duração válida (maior que 0)."))
+                    return@launch
                 }
+
+                val newPoll = withContext(Dispatchers.IO) {
+                    repository.createEnquete(
+                        title = title,
+                        options = validOptions,
+                        duracaoHoras = duracaoHoras
+                    )
+                }
+
                 _formEvent.emit(FormEvent.Success(newPoll.id))
+
             } catch (e: Exception) {
-                // ...
+                _formEvent.emit(FormEvent.Error("Erro ao criar enquete: ${e.localizedMessage}"))
             }
         }
     }

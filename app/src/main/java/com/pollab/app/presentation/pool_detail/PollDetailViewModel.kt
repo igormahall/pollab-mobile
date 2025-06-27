@@ -1,5 +1,7 @@
 package com.example.app.presentation.poll_detail
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.app.data.Enquete
@@ -11,6 +13,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import retrofit2.HttpException
 
 // Representa eventos únicos, como mostrar uma notificação de erro
 sealed interface VoteEvent {
@@ -19,7 +25,6 @@ sealed interface VoteEvent {
 
 sealed interface PollDetailUiState {
     object Loading : PollDetailUiState
-    // CORREÇÃO 1: Adicionar a propriedade isVoting de volta
     data class Success(val enquete: Enquete, val isVoting: Boolean = false) : PollDetailUiState
     data class Error(val message: String) : PollDetailUiState
 }
@@ -32,7 +37,10 @@ class PollDetailViewModel(private val repository: PollRepository = PollRepositor
     private val _voteEvent = MutableSharedFlow<VoteEvent>()
     val voteEvent = _voteEvent.asSharedFlow()
 
+    private var currentPollId: String? = null
+
     fun fetchEnquete(pollId: String) {
+        currentPollId = pollId
         _uiState.value = PollDetailUiState.Loading
         viewModelScope.launch {
             try {
@@ -44,29 +52,44 @@ class PollDetailViewModel(private val repository: PollRepository = PollRepositor
         }
     }
 
-    // CORREÇÃO 2: Lógica de voto atualizada para gerenciar o estado 'isVoting'
+    @RequiresApi(Build.VERSION_CODES.O)
     fun vote(optionId: Int, participantId: String) {
         val currentState = _uiState.value
-        // Garante que só podemos votar se o estado for Success e não estivermos já votando
         if (currentState is PollDetailUiState.Success && !currentState.isVoting) {
-            // Atualiza o estado para mostrar que a votação começou
             _uiState.value = currentState.copy(isVoting = true)
 
             viewModelScope.launch {
-                val pollId = currentState.enquete.id.toString()
+                val pollId = currentPollId ?: return@launch
                 try {
                     withContext(Dispatchers.IO) {
                         repository.vote(pollId, optionId, participantId)
                     }
-                    // Sucesso! Recarrega a enquete para obter os dados mais recentes.
-                    // Isso irá automaticamente definir o novo estado de Success com isVoting = false.
                     fetchEnquete(pollId)
                 } catch (e: Exception) {
-                    // Erro! Emite um evento de notificação e reseta o estado de votação.
-                    _voteEvent.emit(VoteEvent.ShowToast("Não foi possível registrar o voto. Você já votou nesta enquete?"))
+                    val message = when (e) {
+                        is HttpException -> {
+                            when (e.code()) {
+                                409 -> "Você já votou nesta enquete."
+                                else -> "Erro ao registrar o voto: ${e.message()}"
+                            }
+                        }
+                        else -> "Erro inesperado ao votar."
+                    }
+                    _voteEvent.emit(VoteEvent.ShowToast(message))
                     _uiState.value = currentState.copy(isVoting = false)
                 }
             }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun isEnqueteExpirada(expiresAt: String?): Boolean {
+        return try {
+            val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+            val expiration = OffsetDateTime.parse(expiresAt ?: return true, formatter)
+            OffsetDateTime.now(ZoneOffset.UTC).isAfter(expiration)
+        } catch (e: Exception) {
+            true
         }
     }
 }
