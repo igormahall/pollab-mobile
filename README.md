@@ -1,8 +1,27 @@
-# 📱 Aplicativo Mobile — Pollab
+# 🧪 Pollab - Mobile App
 
-App desenvolvido em Kotlin com Jetpack Compose.  
-O aplicativo consome a **API RESTful** construída em Django para **listar**, **criar** e **votar** em enquetes.
+![Kotlin](https://img.shields.io/badge/Kotlin-1.9-orange)
+![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-UI-blue)
+![Architecture-MVVM](https://img.shields.io/badge/Architecture-MVVM-green)
+![License](https://img.shields.io/badge/License-MIT-green)
 
+**About Pollab**
+
+**Pollab** (short for *Poll Laboratory*) is a modern, open-source polling platform designed to
+simplify how users collect opinions and make decisions. Built with **Django REST Framework**
+and **PostgreSQL**, it powers both web and mobile clients with a robust API.
+
+Main features include:
+- 🧠 Clean and responsive UI
+- ⚙️ Reactive forms with validation
+- 🕒 Real-time vote tracking and countdown support
+- 📢 Toast notifications for a smooth UX
+
+Whether you're testing ideas, collecting feedback, or running interactive demos — Pollab lets
+you create, vote, and visualize results in seconds.
+> **Join. Experiment. Transform.**
+
+---
 
 ## Interface
 
@@ -14,157 +33,155 @@ O aplicativo consome a **API RESTful** construída em Django para **listar**, **
 
 ---
 
-## 🛠️ Arquitetura & Tecnologias
+## 🛠️ Architecture & Technologies
 
-### Stack utilizada
+| Layer       | Technology                                    |
+|-------------|-----------------------------------------------|
+| **IDE**     | Android Studio (recommended) or IntelliJ IDEA |
+| **UI**      | Jetpack Compose                               |
+| **Pattern** | MVVM (Model-View-ViewModel)                   |
+| **Network** | Retrofit                                      |
+| **Async**   | Kotlin Coroutines                             |
+| **State**   | StateFlow · SharedFlow                        |
+| **Routing** | Navigation Compose                            |
 
-| Camada | Tecnologia |
-|--------|------------|
-| **IDE** | Android Studio (recomendado) ou IntelliJ IDEA Ultimate |
-| **UI** | Jetpack Compose |
-| **Arquitetura** | MVVM (Model-View-ViewModel) |
-| **Networking** | Retrofit |
-| **Concorrência** | Kotlin Coroutines |
-| **Gerenciamento de estado** | StateFlow, SharedFlow |
-| **Navegação** | Navigation Compose |
+### Why These Choices?
 
-### Justificativa
-
-- **Jetpack Compose**: Kit de ferramentas **moderno e declarativo** para UIs nativas, substituindo XML.
-- **MVVM**: Padrão recomendado pelo Google para separar UI e lógica de negócios.
-- **Retrofit**: Cliente HTTP robusto e seguro.
-- **Coroutines**: Simplificam código assíncrono, sem travar a UI.
+- **Jetpack Compose**: A modern, declarative UI toolkit — replaces XML layouts.
+- **MVVM**: Separates UI from business logic, recommended by Google.
+- **Retrofit**: Clean and type-safe HTTP client.
+- **Coroutines**: Simplifies async tasks, avoiding UI blocking.
 
 ---
 
-## ⚙️ Configuração & Execução
+## ⚙️ Setup
 
-### 1️⃣ Clonar o Repositório
 
-```bash
-git clone https://github.com/seu-usuario/seu-repositorio-android.git
-cd seu-repositorio-android
-```
+### 0. Prerequisites
 
-### 2️⃣ Abrir no Android Studio
+Make sure you have the following installed:
 
-- Abra o Android Studio (ou IntelliJ IDEA).
-- Selecione **Open** → escolha a pasta do projeto clonado.
-- Aguarde o **Gradle** sincronizar todas as dependências.
+- [Android Studio](https://developer.android.com/studio) or [IntelliJ IDEA](https://www.jetbrains.com/idea/download/?section=windows) 
+- [Java Development Kit (JDK) > 17](https://adoptium.net/en-GB/)
+- [Git](https://git-scm.com/)
+- Backend API running locall (see: [pollab-backend](https://github.com/igormahall/pollab-backend))
+  > Must be accessible from emulator via `http://10.0.2.2:8000`
 
-### 3️⃣ Executar o Backend Django
 
-- A API deve estar rodando localmente para o app funcionar.
-- No projeto do backend Django:
+### 1. Clone the Repository
 
 ```bash
-python manage.py runserver
+git clone https://github.com/igormahall/pollab-mobile.git
+cd pollab-mobile
 ```
 
-### 4️⃣ Executar o App
+### 2. Open in Android Studio
+- Launch **Android Studio** or **IntelliJ IDEA**
+- Select **Open Project** → choose the project folder
+- Let **Gradle** sync all dependencies
 
-- Inicie um emululador Android **ou** conecte um dispositivo físico.
-- No Android Studio, clique em **Run 'app'** (▶️).
+### 3. Run the Django Backend
+- Ensure the REST API is up and running locally:
+  ```bash
+  python manage.py runserver
+  ```
+> ⚠️ The app expects the backend to be accessible at http://10.0.2.2:8000/ for emulator compatibility.
+
+
+### 4. Launch the App
+- Start an Android emulator or connect a physical device
+- Press **Run 'app'** ▶️ in Android Studio
 
 ---
 
-## 🏗️ Etapas de Implementação
+## 🧱 Implementation Breakdown
 
-### 1️⃣ Camada de Rede & Dados
+### 🧩 1. Network & Data Layer
 
-- **Modelos de Dados**  
-  Data classes em Kotlin (`Enquete`, `Opcao`, `Payloads`) espelham o JSON da API.
+- **Data Models**  
+  - Kotlin `data class` objects mirror the JSON schema from the Django API.
+
 
 - **API Service (Retrofit)**  
-  Interface `ApiService` com anotações Retrofit (`@GET`, `@POST`, `@Path`, `@Body`).
+  - Interface `ApiService` with annotations like `@GET`, `@POST`, `@Path`, `@Body`
 
-- **Conexão com localhost**  
-  `baseUrl`: `http://10.0.2.2:8000/`  
-  (IP especial para o emulador acessar o localhost da máquina hospedeira.)
 
-- **Permissões**  
-  Adicionadas no `AndroidManifest.xml`:
-  - `INTERNET`
-  - `usesCleartextTraffic` (para acesso não HTTPS em dev).
+- **Localhost Access**  
+  - Use `http://10.0.2.2:8000/` in the emulator )maps to host´s localhost)
 
+
+- **Permissions**  
+  - In `AndroidManifest.xml`:
+    ```xml
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application android:usesCleartextTraffic="true" ... /> 
+    ```
+  
 ---
 
-### 2️⃣ Camada de Lógica (ViewModel & Repository)
+### ⚙️ 2. Logic Layer (Repository & ViewModels)
 
 - **Repository Pattern**  
-  `PollRepository` abstrai a fonte de dados, isolando lógica de rede.
+  - `PollRepository` abstracts data fetching from the UI layer.
 
-- **ViewModels**  
-  Um ViewModel por tela:
+- **ViewModels** (one per screen):
   - `PollListViewModel`
   - `PollDetailViewModel`
   - `PollFormViewModel`
 
-- **Gerenciamento de Estado**
-  - `StateFlow` → estado reativo da UI (`Loading`, `Success`, `Error`).
-  - `SharedFlow` → eventos únicos (toasts, snackbars).
+- **State Management**
+  - `StateFlow` : Exposes reactive UI state (loading, success, error).
+  - `SharedFlow` : Emits one-time events (snackbars, errors).
 
-- **Segurança de Thread**  
-  Chamadas de rede em thread de fundo:  
-  `withContext(Dispatchers.IO)` dentro de `viewModelScope`.
+- **Concurrency & Safety**  
+  Uses `withContext(Dispatchers.IO)` inside `viewModelScope` to avoid blocking the UI thread
 
 ---
 
-### 3️⃣ Camada de Apresentação (UI com Jetpack Compose)
+### 🎨 3. Presentation Layer (Jetpack Compose UI)
 
-- **Navegação**  
-  `Navigation Compose` com gráfico de navegação (`AppNavigation.kt`):
-  - Rota dinâmica: `/enquetes/{pollId}`.
+- **Navegation**  
+  - Handled via `Navigation Compose` in `AppNavigation.kt`:
+  ```kotlin
+  navController.navigate("/enquetes/{pollId}")
+  ```
 
-- **Componentização**  
-  Telas como funções `@Composable`:
+- **Composables**
   - `PollListScreen`
   - `PollDetailScreen`
   - `PollFormScreen`
 
-- **UI Reativa**  
-  - `LazyColumn` → listas performáticas.
-  - `Card` → itens de enquete.
-  - `OutlinedTextField` → formulários.
-  - `remember { mutableStateOf(...) }` → gerenciamento local de estado.
+
+- **Modern UI Components**  
+  - `LazyColumn` : Efficient scrolling lists
+  - `Card` : For individual pools
+  - `OutlinedTextField` : Pool forms
+  - `remember { mutableStateOf(...) }` : local UI state
 
 ---
 
-### 4️⃣ Melhorias de Usabilidade (UX)
+### 4. UX Enhancements
 
-- **Feedback Visual**
-  - **Loading indicators**
-  - **Mensagens de erro / sucesso** via Snackbar.
-  - **Botões desabilitados** durante operações de rede.
+- **Visual Feedback**
+  - Loading snippers
+  - Snackbar messages for success or failure
+  - Disables buttons async operations
 
-- **Destaque da Opção Vencedora**
-  - Opção com mais votos recebe destaque visual (ex: borda colorida).
+- **Winner Highlighting**
+  - The option with most votes is visually emphasized
 
-- **Simulação de Múltiplos Usuários**
-  - Campo de texto para o "Nome do Participante", testando a regra **1 voto por usuário**.
-
----
-
-## 🚀 Próximos Passos (Melhorias Futuras)
-
-- Persistência offline com Room.
-- Testes unitários de ViewModels.
-- Testes instrumentados com Compose UI Test.
-- Tela de histórico de enquetes (abertas e fechadas).
-- Autenticação real (JWT).
+- **User simulation**
+  - A participant name field simulates multiple users and enforces **1 vote per user rule**
 
 ---
 
-## 🤝 Contribuindo
+## 🤝 Contributing
 
-1. Fork → branch (`git checkout -b feature/xyz`)  
-2. Commit claro e descritivo  
-3. Abra um Pull Request explicando a motivação
-
----
-
-## 📜 Licença
-
-Distribuído sob a licença **MIT**.
+We welcome contributions! If you'd like to suggest improvements, report a bug,
+or propose new features, feel free to open an issue or submit a pull request.
 
 ---
+
+## 📜 License
+
+Distributed under the **MIT License**.
