@@ -1,4 +1,4 @@
-# 🧪 Pollab - Mobile App · [Play Store](https://pollab-web.netlify.app/)
+# 🧪 Pollab - Mobile App · [Play Store](https://groups.google.com/g/pollab-app)
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-1.9-orange)
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-UI-blue)
